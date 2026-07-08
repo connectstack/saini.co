@@ -10,6 +10,9 @@ import heroSoftware from './assets/hero/software.jpeg'
 import heroVideo from './assets/hero/video.jpeg'
 import heroBattery from './assets/hero/battery.jpeg'
 import heroAi from './assets/hero/ai.jpeg'
+// people.jpeg is licensed for commercial use (Unsplash License, Brooke Cagle:
+// unsplash.com/photos/-uHVRvDr7pg) — no replacement needed.
+import heroPeople from './assets/hero/people.jpeg'
 
 export const SITE = {
   name: 'Saini & Co',
@@ -37,7 +40,7 @@ export const HERO_PHRASES = [
   { text: 'battery systems.', label: 'EV Battery Systems', image: heroBattery },
   { text: 'intelligent software.', label: 'Software & Dashboards', image: heroSoftware },
   { text: 'AI that ships.', label: 'Applied AI', image: heroAi },
-  { text: 'high-trust teams.', label: 'People Operations', image: null },
+  { text: 'high-trust teams.', label: 'People Operations', image: heroPeople },
   { text: 'stories that sell.', label: 'Video Production', image: heroVideo },
 ]
 
