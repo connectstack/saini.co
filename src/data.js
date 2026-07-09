@@ -69,6 +69,8 @@ export const SERVICES = [
       'From cell selection to full pack architecture — we design battery systems that are safe, dense, and manufacturable. Flagship practice for EV startups and retrofitters.',
     tags: ['Pack architecture', 'BMS strategy', 'Thermal design', 'Cell selection', 'Certification support'],
     large: true,
+    badge: 'Flagship practice',
+    art: 'battery',
   },
   {
     id: 'software',
@@ -76,8 +78,11 @@ export const SERVICES = [
     icon: 'code',
     accent: 'electric',
     blurb:
-      'Product-grade iOS, web, and backend systems built by engineers who have shipped for 8+ years.',
+      'Product-grade iOS, web, and backend systems built by engineers who have shipped production software for 8+ years.',
     tags: ['iOS & Swift', 'Web apps', 'APIs & cloud', 'Code audits'],
+    large: true,
+    badge: '8+ years shipping',
+    art: 'code',
   },
   {
     id: 'ai',

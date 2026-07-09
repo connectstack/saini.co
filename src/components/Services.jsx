@@ -47,6 +47,37 @@ function BatteryArt() {
   )
 }
 
+// Decorative terminal illustration for the software card: code lines "type" in sequence.
+function CodeArt() {
+  const lines = [
+    { x: 16, y: 32, width: 92, fill: '#38e8ff' },
+    { x: 16, y: 45, width: 132, fill: 'rgba(238,242,250,0.55)' },
+    { x: 30, y: 58, width: 82, fill: '#b9ff2e' },
+    { x: 30, y: 71, width: 56, fill: '#8f6bff' },
+  ]
+  return (
+    <svg viewBox="0 0 200 90" className="h-24 w-auto" aria-hidden="true">
+      <rect x="4" y="4" width="192" height="82" rx="10" fill="none" stroke="rgba(56,232,255,0.45)" strokeWidth="3" />
+      {[18, 30, 42].map((cx) => (
+        <circle key={cx} cx={cx} cy="16" r="3.5" fill="rgba(56,232,255,0.45)" />
+      ))}
+      {lines.map((line, i) => (
+        <rect
+          key={line.y}
+          {...line}
+          height="7"
+          rx="3.5"
+          className="charge-cell"
+          style={{ animationDelay: `${i * 0.35}s` }}
+        />
+      ))}
+      <rect x="92" y="71" width="8" height="7" rx="2" fill="#38e8ff" className="charge-cell" style={{ animationDelay: '1.4s' }} />
+    </svg>
+  )
+}
+
+const ART = { battery: BatteryArt, code: CodeArt }
+
 function setSpotlight(e) {
   const rect = e.currentTarget.getBoundingClientRect()
   e.currentTarget.style.setProperty('--mx', `${e.clientX - rect.left}px`)
@@ -55,10 +86,11 @@ function setSpotlight(e) {
 
 function ServiceCard({ service, delay }) {
   const accent = ACCENTS[service.accent]
+  const Art = service.art ? ART[service.art] : null
   return (
     <Reveal
       delay={delay}
-      className={service.large ? 'md:col-span-4' : 'md:col-span-2'}
+      className={service.large ? 'md:col-span-3' : 'md:col-span-2'}
     >
       <article
         onMouseMove={setSpotlight}
@@ -70,9 +102,9 @@ function ServiceCard({ service, delay }) {
               {ICONS[service.icon]}
             </svg>
           </span>
-          {service.large && (
-            <span className="hidden rounded-full border border-volt/25 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-volt sm:block">
-              Flagship practice
+          {service.badge && (
+            <span className={`hidden rounded-full border bg-white/[0.02] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] sm:block ${accent.chip}`}>
+              {service.badge}
             </span>
           )}
         </div>
@@ -84,9 +116,9 @@ function ServiceCard({ service, delay }) {
           <p className="max-w-md text-sm leading-relaxed text-mist-500">{service.blurb}</p>
         </div>
 
-        {service.large && (
+        {Art && (
           <div className="hidden sm:block">
-            <BatteryArt />
+            <Art />
           </div>
         )}
 
