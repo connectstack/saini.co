@@ -14,7 +14,7 @@ import heroAi from './assets/hero/ai.jpeg'
 // unsplash.com/photos/-uHVRvDr7pg) — no replacement needed.
 import heroPeople from './assets/hero/people.jpeg'
 
-export const SITE = {
+export const SITE = { 
   name: 'Saini & Co',
   fullName: 'Saini & Co. Consulting',
   tagline: 'Batteries. Software. AI. People. Stories.',
