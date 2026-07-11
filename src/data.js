@@ -2,16 +2,18 @@
 // All editable site content lives here — swap names, emails, and copy freely.
 // ---------------------------------------------------------------------------
 
-// Hero showcase images — drop replacements into src/assets/hero/ and update
-// the imports. ⚠️ The current files are TEMPORARY placeholders sourced from
-// third parties (other companies' branding is visible) — replace with owned
-// or licensed visuals before going live.
+// Hero showcase images. All are license-clean for commercial use with NO
+// attribution required (Unsplash / Pexels licenses). Credits kept here for
+// record; swap to owned photos of real work anytime by replacing the files.
+//   battery  — Pexels · Luke Miller     · EV powertrain bay
+//   software — Pexels · Nemuel Sereti   · VS Code on a MacBook
+//   ai       — Unsplash · Logan Voss    · glowing neural-flow abstract
+//   video    — Unsplash · Alan Alves    · DaVinci Resolve color-grading suite
+//   people   — Unsplash · Brooke Cagle  · team collaborating
 import heroSoftware from './assets/hero/software.jpeg'
 import heroVideo from './assets/hero/video.jpeg'
 import heroBattery from './assets/hero/battery.jpeg'
 import heroAi from './assets/hero/ai.jpeg'
-// people.jpeg is licensed for commercial use (Unsplash License, Brooke Cagle:
-// unsplash.com/photos/-uHVRvDr7pg) — no replacement needed.
 import heroPeople from './assets/hero/people.jpeg'
 
 export const SITE = { 

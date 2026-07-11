@@ -27,10 +27,9 @@ component changes are needed for content edits.
   is where form submissions are *delivered*.
 - **Hero showcase images** live in `src/assets/hero/` and are wired up via
   imports at the top of `data.js`. Each rotating phrase pairs with one image.
-  > ⚠️ `battery/software/ai/video.jpeg` are temporary third-party
-  > placeholders (visible external branding) — replace them with owned or
-  > licensed visuals before going live. `people.jpeg` is already licensed
-  > (Unsplash, Brooke Cagle) and needs no replacement.
+  All five are license-clean for commercial use with no attribution required
+  (Unsplash / Pexels — credits in `data.js`). Swap any for a photo of your
+  own real work anytime by replacing the file (keep the same name).
 - **Service cards:** each service in `data.js` can set `accent`
   (volt/electric/plasma), `large` (wide card), `badge` (corner chip), and
   `art` (`battery` or `code` animated illustration).

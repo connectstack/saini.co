@@ -60,7 +60,7 @@ no backend, no tests — one page composed of section components.
   that drive framer-motion state.
 - **Marquee accessibility:** the second `<Row />` in `Marquee.jsx` is a
   visual clone for the seamless loop and must stay `aria-hidden`.
-- **Hero showcase images (`src/assets/hero/`):** `people.jpeg` is
-  commercially licensed (Unsplash). `battery/software/ai/video.jpeg` are
-  third-party placeholders containing other companies' branding — they must
-  be replaced with owned or licensed visuals before public launch.
+- **Hero showcase images (`src/assets/hero/`):** all five (battery, software,
+  ai, video, people) are license-clean stock (Unsplash / Pexels, no
+  attribution required; credits in `data.js`). Safe to ship; can be swapped
+  for photos of real work by replacing the files (keep the same names).
