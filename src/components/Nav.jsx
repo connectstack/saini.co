@@ -45,6 +45,7 @@ export default function Nav() {
             <a
               key={link.href}
               href={link.href}
+              {...(link.external ? { target: '_blank', rel: 'noopener' } : {})}
               className="text-sm font-medium text-mist-300 transition-colors hover:text-volt"
             >
               {link.label}
@@ -85,6 +86,7 @@ export default function Nav() {
                 <a
                   key={link.href}
                   href={link.href}
+                  {...(link.external ? { target: '_blank', rel: 'noopener' } : {})}
                   onClick={() => setOpen(false)}
                   className="rounded-lg px-3 py-3 text-base font-medium text-mist-300 transition-colors hover:bg-white/5 hover:text-volt"
                 >

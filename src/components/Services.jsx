@@ -19,9 +19,9 @@ const ICONS = {
 }
 
 const ACCENTS = {
-  volt: { text: 'text-volt', border: 'hover:border-volt/40', chip: 'border-volt/25 text-volt' },
-  electric: { text: 'text-electric', border: 'hover:border-electric/40', chip: 'border-electric/25 text-electric' },
-  plasma: { text: 'text-plasma', border: 'hover:border-plasma/40', chip: 'border-plasma/25 text-plasma' },
+  volt: { text: 'text-volt', border: 'hover:border-volt/40', chip: 'border-volt/25 text-volt', btn: 'bg-volt text-ink-950 shadow-[0_0_0_1px_rgba(185,255,46,0.4)] hover:shadow-[0_10px_30px_-8px_rgba(185,255,46,0.5)]' },
+  electric: { text: 'text-electric', border: 'hover:border-electric/40', chip: 'border-electric/25 text-electric', btn: 'bg-electric text-ink-950 shadow-[0_0_0_1px_rgba(56,232,255,0.4)] hover:shadow-[0_10px_30px_-8px_rgba(56,232,255,0.5)]' },
+  plasma: { text: 'text-plasma', border: 'hover:border-plasma/40', chip: 'border-plasma/25 text-plasma', btn: 'bg-plasma text-white shadow-[0_0_0_1px_rgba(143,107,255,0.4)] hover:shadow-[0_10px_30px_-8px_rgba(143,107,255,0.5)]' },
 }
 
 // Decorative battery illustration for the flagship card: cells "charge" in sequence.
@@ -132,6 +132,20 @@ function ServiceCard({ service, delay }) {
             </li>
           ))}
         </ul>
+
+        {service.link && (
+          <a
+            href={service.link.href}
+            target="_blank"
+            rel="noopener"
+            className={`group/cta inline-flex w-fit items-center gap-2 rounded-full px-5 py-2.5 font-display text-sm font-bold transition-transform hover:scale-[1.03] active:scale-95 ${accent.btn}`}
+          >
+            {service.link.label}
+            <svg viewBox="0 0 24 24" className="h-4 w-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </a>
+        )}
       </article>
     </Reveal>
   )

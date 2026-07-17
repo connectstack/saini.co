@@ -34,6 +34,8 @@ export const NAV_LINKS = [
   { label: 'Process', href: '#process' },
   { label: 'Team', href: '#team' },
   { label: 'FAQ', href: '#faq' },
+  // Standalone static tool in public/ (opens in a new tab).
+  { label: 'Simulator', href: 'ev-simulator.html', external: true },
 ]
 
 // Each phrase pairs the rotating headline text with the showcase visual
@@ -73,6 +75,8 @@ export const SERVICES = [
     large: true,
     badge: 'Flagship practice',
     art: 'battery',
+    // Standalone interactive tool shipped from public/ — see NAV_LINKS + Services.jsx.
+    link: { label: 'Launch the battery simulator', href: 'ev-simulator.html' },
   },
   {
     id: 'software',
