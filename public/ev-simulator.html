@@ -154,6 +154,29 @@
   .seg[aria-pressed="true"]{color:#fff; background:var(--cyan); border-color:transparent; box-shadow:0 3px 10px color-mix(in srgb,var(--cyan) 30%,transparent)}
   :root[data-theme="light"] .seg[aria-pressed="true"], :root:not([data-theme]) .seg[aria-pressed="true"]{color:#fff}
 
+  /* ---- custom drive-cycle CSV import ---- */
+  .seg-custom[hidden], .csvunit[hidden]{display:none}   /* explicit: our display:flex would otherwise beat [hidden] */
+  .seg-custom{grid-column:1/-1; display:flex; align-items:center; justify-content:center; gap:7px; overflow:hidden}
+  .seg-custom .cs-ico{width:13px; height:13px; flex:none; opacity:.85}
+  .seg-custom .cs-name{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--font-mono); font-size:.72rem; max-width:100%}
+  .import-row{display:flex; align-items:stretch; gap:7px; margin-top:6px}
+  .import-btn{flex:1; display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    font-family:var(--font-ui); font-size:.78rem; font-weight:600; color:var(--muted);
+    background:var(--panel-2); border:1px dashed var(--border); border-radius:9px; padding:9px 10px; cursor:pointer; transition:.15s}
+  .import-btn:hover{border-color:var(--accent); color:var(--accent)}
+  .import-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .import-btn svg{width:15px; height:15px; flex:none}
+  .csvunit{display:flex; gap:2px; background:var(--panel-2); border:1px solid var(--border); border-radius:9px; padding:2px}
+  .csvunit .u{display:grid; place-items:center; font-family:var(--font-mono); font-size:.64rem; padding:0 7px; border-radius:7px; cursor:pointer; color:var(--muted); transition:.12s}
+  .csvunit .u:hover{color:var(--text)}
+  .csvunit .u[aria-pressed="true"]{background:var(--accent); color:#fff}
+  .import-msg{font-family:var(--font-mono); font-size:.71rem; line-height:1.45; margin-top:8px}
+  .import-msg:empty{display:none}
+  .import-msg[data-kind="ok"]{color:var(--green)}
+  .import-msg[data-kind="err"]{color:var(--red)}
+  .import-hint{font-size:.67rem; color:var(--faint); margin-top:6px; line-height:1.45}
+  .import-hint b{color:var(--muted); font-weight:600}
+
   .ctrl{margin-bottom:13px}
   .ctrl .row{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px}
   .ctrl label{font-size:.82rem; color:var(--text); font-weight:500}
@@ -323,7 +346,25 @@
           <div class="seg" data-cyc="wltp" aria-pressed="true" role="button" tabindex="0">WLTP</div>
           <div class="seg" data-cyc="urban" aria-pressed="false" role="button" tabindex="0">Urban</div>
           <div class="seg" data-cyc="highway" aria-pressed="false" role="button" tabindex="0">Highway</div>
+          <div class="seg seg-custom" id="customSeg" data-cyc="custom" role="button" tabindex="0" aria-pressed="false" hidden>
+            <svg class="cs-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4M6 3h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/></svg>
+            <span class="cs-name">custom.csv</span>
+          </div>
         </div>
+        <div class="import-row">
+          <button class="import-btn" id="importBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m0 0L8 7m4-4 4 4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span id="importLabel">Import CSV</span>
+          </button>
+          <div class="csvunit" id="csvUnit" hidden aria-label="Speed unit of imported data">
+            <span class="u" data-u="kmh" role="button" tabindex="0">km/h</span>
+            <span class="u" data-u="ms" role="button" tabindex="0">m/s</span>
+            <span class="u" data-u="mph" role="button" tabindex="0">mph</span>
+          </div>
+        </div>
+        <input type="file" id="csvInput" accept=".csv,.txt,text/csv,text/plain" hidden>
+        <div class="import-msg" id="importMsg"></div>
+        <div class="import-hint">Columns: <b>time (s)</b>, <b>speed</b> &mdash; or a single speed column at 1&nbsp;Hz. Resampled to 1&nbsp;Hz.</div>
       </div>
 
       <div class="group">
@@ -623,6 +664,7 @@ const CYCLES={
   ]}
 };
 function buildCycle(key){
+  if(key==='custom') return STATE.customCycle || buildCycle('wltp');
   const spec=CYCLES[key]; const v=[], ph=[];
   for(const [label,trips] of spec.phases){
     for(const [vp,aa,cs,ad,idl] of trips){
@@ -632,6 +674,69 @@ function buildCycle(key){
   }
   const t=new Float64Array(v.length); for(let i=0;i<v.length;i++)t[i]=i;
   return {t, v:Float64Array.from(v), ph, name:spec.name};
+}
+
+/* ---- parse a user CSV into a 1 Hz drive cycle (time[s], speed) ---- */
+function parseCSVCycle(text, unitOverride){
+  const lines = text.replace(/^﻿/,'')
+    .split(/\r\n|\r|\n/).map(l=>l.trim())
+    .filter(l=>l.length && !l.startsWith('#') && !l.startsWith('//'));
+  if(lines.length < 2) throw new Error('File has fewer than 2 rows.');
+
+  // pick the delimiter that splits the first row into the most fields
+  let delim=',', best=1;
+  for(const d of [',',';','\t','|']){ const c=lines[0].split(d).length; if(c>best){best=c; delim=d;} }
+  const whitespace = best<=1;
+  const split = row => (whitespace ? row.split(/\s+/) : row.split(delim)).map(s=>s.trim());
+
+  const first = split(lines[0]);
+  const headerish = first.some(c=>c!=='' && isNaN(Number(c)));
+  const single = first.length === 1;
+  let startRow=0, tCol=0, vCol=1, unit='kmh';
+  if(headerish){
+    startRow = 1;
+    const lc = first.map(c=>c.toLowerCase());
+    if(!single){
+      const ti = lc.findIndex(c=>/\b(time|t|sec|secs|second|seconds|timestamp|elapsed)\b/.test(c) || /\(s\)/.test(c));
+      const vi = lc.findIndex(c=>/(speed|velocity|vel|kph|km\/?h|mph|m\/?s)/.test(c) || /\bv\b/.test(c));
+      tCol = ti>=0 ? ti : 0;
+      vCol = vi>=0 ? vi : (tCol===0 ? 1 : 0);
+    } else { vCol = 0; }
+    const vh = lc[vCol] || '';
+    if(/mph|mile/.test(vh)) unit='mph';
+    else if(/(m\/s|m\.s|mps|_ms|meters?\/s|metres?\/s)/.test(vh) && !/km/.test(vh)) unit='ms';
+    else unit='kmh';
+  }
+  if(unitOverride) unit = unitOverride;
+
+  const T=[], V=[];
+  for(let i=startRow;i<lines.length;i++){
+    const c = split(lines[i]);
+    const s = single ? Number(c[0]) : Number(c[vCol]);
+    const t = single ? T.length : Number(c[tCol]);
+    if(!isFinite(t) || !isFinite(s)) continue;
+    T.push(t); V.push(Math.max(0, s));
+  }
+  if(V.length < 2) throw new Error('Could not read 2+ numeric rows. Expected columns: time, speed.');
+
+  // sort by time, drop duplicate timestamps
+  const order = [...T.keys()].sort((a,b)=>T[a]-T[b]);
+  const Ts=[], Vs=[];
+  for(const i of order){ if(Ts.length && T[i]===Ts[Ts.length-1]) { Vs[Vs.length-1]=V[i]; continue; } Ts.push(T[i]); Vs.push(V[i]); }
+  const t0 = Ts[0]; for(let i=0;i<Ts.length;i++) Ts[i]-=t0;
+  const dur = Ts[Ts.length-1];
+  if(!(dur>0)) throw new Error('Time column is not increasing.');
+  const n = Math.round(dur)+1;
+  if(n > 20000) throw new Error('Cycle is over 20000 s — is the time column in milliseconds? Use seconds.');
+
+  const k = unit==='mph' ? 0.44704 : unit==='ms' ? 1 : 1/3.6;   // -> m/s
+  const t=new Float64Array(n), v=new Float64Array(n);
+  let vmax=0;
+  for(let j=0;j<n;j++){ t[j]=j; v[j]=Math.max(0, interp(j, Ts, Vs))*k; if(v[j]>vmax)vmax=v[j]; }
+  if(vmax*3.6 < 1) throw new Error('No vehicle motion detected (all speeds ~0). Check the speed column / unit.');
+
+  return { t, v, ph:new Array(n).fill('Custom'), name:'Custom cycle',
+           unit, dur:n-1, dist:trapz(v,t)/1000, vmaxKmh:vmax*3.6, nSrc:V.length };
 }
 
 /* ---- vehicle → battery power ---- */
@@ -755,6 +860,7 @@ const T_WARN=45, T_CRIT=55;                             // deg C limits
 const STATE={mode:"soh", cyc:"wltp", chem:"nmc", mass:1650, cd:0.28, energy:60, soc0:0.80,
              sohc:0.88, rgrow:1.40, noise:1.0,
              tcool:25, cooling:"liquid", ua:400, dudt:-0.10,   // thermal controls
+             customCycle:null,                                 // user-imported CSV drive cycle
              data:null};
 
 /* ---- lumped thermal model: heat generation + cooling -> pack temperature ---- */
@@ -1030,7 +1136,7 @@ function drawHero(playIdx){
   const d=STATE.data; if(!d)return; const P=pal();
   const {cycle,sim}=d; const t=cycle.t;
   // phase bands
-  const bandColors={Low:P.cyan,Medium:P.green,High:P.amber,"Extra-High":P.red,Urban:P.cyan,Cruise:P.cyan,Rapid:P.amber};
+  const bandColors={Low:P.cyan,Medium:P.green,High:P.amber,"Extra-High":P.red,Urban:P.cyan,Cruise:P.cyan,Rapid:P.amber,Custom:P.violet};
   const bands=[]; let s=0;
   for(let i=1;i<=cycle.ph.length;i++){
     if(i===cycle.ph.length||cycle.ph[i]!==cycle.ph[s]){
@@ -1321,8 +1427,44 @@ bindRange("dudt",v=>v.toFixed(2)+'<small> mV/K</small>',v=>STATE.dudt=v);
 
 $("#cycleSeg").addEventListener("click",e=>{
   const b=e.target.closest(".seg"); if(!b)return;
+  if(b.dataset.cyc==="custom" && !STATE.customCycle)return;   // ignore until a CSV is loaded
   document.querySelectorAll("#cycleSeg .seg").forEach(x=>x.setAttribute("aria-pressed","false"));
   b.setAttribute("aria-pressed","true"); STATE.cyc=b.dataset.cyc; compute(); paint(); runAnim();
+});
+
+/* ---- custom drive-cycle CSV import ---- */
+let lastCSV=null;
+const UNIT_LABEL={kmh:'km/h', ms:'m/s', mph:'mph'};
+function importMsg(kind, text){ const el=$("#importMsg"); el.dataset.kind=kind; el.textContent=text; }
+function applyCSV(text, name, unitOverride){
+  const cyc=parseCSVCycle(text, unitOverride);       // throws Error on bad input
+  cyc.name='Custom: '+name;
+  STATE.customCycle=cyc; lastCSV={text, name};
+  const seg=$("#customSeg");
+  seg.hidden=false;
+  seg.querySelector('.cs-name').textContent = name.length>24 ? name.slice(0,22)+'...' : name;
+  document.querySelectorAll("#cycleSeg .seg").forEach(x=>x.setAttribute("aria-pressed","false"));
+  seg.setAttribute("aria-pressed","true"); STATE.cyc='custom';
+  $("#importLabel").textContent='Replace CSV';
+  const un=$("#csvUnit"); un.hidden=false;
+  un.querySelectorAll('.u').forEach(u=>u.setAttribute('aria-pressed', u.dataset.u===cyc.unit?'true':'false'));
+  importMsg('ok', `Loaded ${cyc.nSrc} rows -> ${cyc.dur+1}s, ${cyc.dist.toFixed(1)} km, ${cyc.vmaxKmh.toFixed(0)} km/h max (as ${UNIT_LABEL[cyc.unit]})`);
+  compute(); paint(); runAnim();
+}
+$("#importBtn").addEventListener("click",()=>$("#csvInput").click());
+$("#csvInput").addEventListener("change",e=>{
+  const f=e.target.files && e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{ try{ applyCSV(String(rd.result||''), f.name); }
+    catch(err){ importMsg('err', (err && err.message) || 'Could not parse CSV.'); } };
+  rd.onerror=()=>importMsg('err','Could not read the file.');
+  rd.readAsText(f);
+  e.target.value='';   // allow re-picking the same file
+});
+$("#csvUnit").addEventListener("click",e=>{
+  const u=e.target.closest('.u'); if(!u || !lastCSV)return;
+  try{ applyCSV(lastCSV.text, lastCSV.name, u.dataset.u); }
+  catch(err){ importMsg('err', (err && err.message) || 'Could not parse CSV.'); }
 });
 $("#chemSeg").addEventListener("click",e=>{
   const b=e.target.closest(".chem"); if(!b)return;
